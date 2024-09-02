@@ -1,0 +1,18 @@
+{
+  "promptDelete": false,
+  "mobileToolbarCommands": [
+    "editor:insert-wikilink",
+    "editor:attach-file",
+    "editor:toggle-bold",
+    "editor:toggle-italics",
+    "editor:toggle-code",
+    "editor:insert-link",
+    "editor:indent-list",
+    "editor:unindent-list",
+    "editor:undo",
+    "editor:redo",
+    "editor:configure-toolbar"
+  ],
+  "vimMode": true,
+  "showLineNumber": true
+}
