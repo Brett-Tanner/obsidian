@@ -57,12 +57,23 @@ Can all be combined with a motion to specify the range they apply to.
 
 ### Motions
 
-- `w` & `b` move forward/backward to the start of the next/previous word, while `e` and `ge` do the same to the end
-  - Their capitalized variants move to the start/end of the next/previous WORD, skipping over slashes/hyphens etc.
-  - WORD motions also work with change and delete motions
+- `,` reverts an `f{char}` search, while `;` repeats it
+  - `t{char}` is a variant of `f{char}` which stops before `{char}` rather than on it. Remember it as `t` like 'till'.
 - `gj` & `gk` move down/up one 'display' line, motions like `$` and `^` can also be prefixed with `g` to do the same
 - `Ctrl-a` increments the number under the cursor or the next number on the line, while `Ctrl-x` decrements it.
   - Both can prefixed with a number to increment/decrement that many times
+
+### Text Objects
+
+- `v/d/ca` acts around the text object, replacing `i` doew the same within it
+- `a{surround_char}` gives a text object around the nearest instances of `{surround_char}`, while `i{surround_char}` gives the same but inside the `{surround_char}` pair.
+  - `t` selects around and within tags
+  - works with paired brackets, quotes, etc. Not with random letters.
+  - works when outside the specified text object, by jumping to the nearest one
+- `w` & `b` move forward/backward to the start of the next/previous word, while `e` and `ge` do the same to the end
+  - `s` acts on a sentence, `p` for paragraphs
+  - Their capitalized variants move to the start/end of the next/previous WORD, skipping over slashes/hyphens etc.
+  - WORD motions also work with change and delete motions
 
 ### Copying
 
