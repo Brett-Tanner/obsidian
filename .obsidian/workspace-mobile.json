@@ -1,14 +1,14 @@
 {
   "main": {
-    "id": "2cdfe6557e54bb42",
+    "id": "0139603fb72aeed4",
     "type": "split",
     "children": [
       {
-        "id": "10f751af0e818e39",
+        "id": "7983a23685af8560",
         "type": "tabs",
         "children": [
           {
-            "id": "2c66c90c18eb0fd0",
+            "id": "88d1e11256072e1e",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -20,12 +20,12 @@
             }
           },
           {
-            "id": "5560cf39c72b15ee",
+            "id": "993616fa5655cba3",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Git.md",
+                "file": "Books/Layered Design for Rails.md",
                 "mode": "source",
                 "source": false
               }
@@ -38,11 +38,11 @@
     "direction": "vertical"
   },
   "left": {
-    "id": "5e16c0e0a5040664",
+    "id": "c77e3f64e720b417",
     "type": "mobile-drawer",
     "children": [
       {
-        "id": "8fa832b77354492a",
+        "id": "17371fc25e3a30dc",
         "type": "leaf",
         "state": {
           "type": "file-explorer",
@@ -52,13 +52,13 @@
         }
       },
       {
-        "id": "45fcf3bb6680f5bf",
+        "id": "7a84dd67511030a2",
         "type": "leaf",
         "state": {
           "type": "search",
           "state": {
             "query": "",
-            "matchingCase": true,
+            "matchingCase": false,
             "explainSearch": false,
             "collapseAll": false,
             "extraContext": false,
@@ -67,7 +67,7 @@
         }
       },
       {
-        "id": "f2858417f2459dfa",
+        "id": "fa22568de73d3a28",
         "type": "leaf",
         "state": {
           "type": "tag",
@@ -78,7 +78,7 @@
         }
       },
       {
-        "id": "e80fa2cf2b552e41",
+        "id": "3a4592003156eea1",
         "type": "leaf",
         "state": {
           "type": "bookmarks",
@@ -89,16 +89,16 @@
     "currentTab": 0
   },
   "right": {
-    "id": "9be66fe14277e403",
+    "id": "e9dcb27a064cf131",
     "type": "mobile-drawer",
     "children": [
       {
-        "id": "bf35166490f0a0ee",
+        "id": "9facf281d10ac03c",
         "type": "leaf",
         "state": {
           "type": "backlink",
           "state": {
-            "file": "Git.md",
+            "file": "Books/Layered Design for Rails.md",
             "collapseAll": false,
             "extraContext": false,
             "sortOrder": "alphabetical",
@@ -110,24 +110,24 @@
         }
       },
       {
-        "id": "3b7470854d12437b",
+        "id": "58ce06d43895bf74",
         "type": "leaf",
         "state": {
           "type": "outgoing-link",
           "state": {
-            "file": "Git.md",
+            "file": "Books/Layered Design for Rails.md",
             "linksCollapsed": false,
             "unlinkedCollapsed": true
           }
         }
       },
       {
-        "id": "31e6b25e916ece13",
+        "id": "0b39bb84df4d45e1",
         "type": "leaf",
         "state": {
           "type": "outline",
           "state": {
-            "file": "Git.md"
+            "file": "Books/Layered Design for Rails.md"
           }
         }
       }
@@ -141,29 +141,33 @@
       "canvas:Create new canvas": false,
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
-      "command-palette:Open command palette": false
+      "command-palette:Open command palette": false,
+      "obsidian-git:Open Git source control": false
     }
   },
-  "active": "5560cf39c72b15ee",
+  "active": "993616fa5655cba3",
   "lastOpenFiles": [
     "Books/Practical Vim.md",
-    "Git.md",
-    "Books/Understanding Software Dynamics.md",
-    "Posts/MoneyForward Book.md",
-    "Posts/MoneyForward (conflict 2024-04-26-16-15-26).md",
-    "Posts/MoneyForward.md",
-    "Posts/MoneyForward (conflict 2024-04-23-14-20-34).md",
-    "Books/Pragmatic Programmer.md",
+    "Books/Layered Design for Rails.md",
+    "/Books/Practical Vim.md",
+    "Tools/interesting.md",
+    "Tools/git.md",
+    "Leetcode/Two Pointers.md",
+    "Leetcode/Stack.md",
+    "Leetcode/Sliding Window.md",
+    "Leetcode/Math & Geometry.md",
+    "Leetcode/Graphs.md",
+    "Leetcode/Dynamic Programming.md",
+    "Leetcode/Binary Trees.md",
+    "Leetcode/Binary Search.md",
+    "Leetcode/Backtracking.md",
     "Leetcode/Arrays & Hashes.md",
-    "Books/Grokking Algorithms.md",
-    "Jobs/Leetcode.md",
-    "Books/Refactoring - Martin Fowler.md",
-    "Jobs/MoneyForward.md",
-    "Posts/Tools.md",
-    "Jobs",
-    "Posts/Interesting Blogs.md",
+    "Jobs/Moneytree.md",
     "Books/Structure and interpretation of computer programs.md",
-    "Lisp.md",
-    "Posts"
+    "Books/Refactoring - Martin Fowler.md",
+    "Tools",
+    "Leetcode",
+    "Jobs",
+    "Books"
   ]
 }
