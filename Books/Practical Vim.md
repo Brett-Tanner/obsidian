@@ -68,6 +68,23 @@ Let's you jump through the history of changes for the current buffer
 - `]d` and `[d` go to the next and previous diagnostics respectively
 - `K` in normal mode brings up the definition of whatever's under the cursor
 
+## Macros
+
+You can execute macros in parallel on a selection with `:normal @q`. This means if there's a line in the middle which the macro would usually fail on, that failure won't prevent the macro acting on valid lines after it.
+
+If you record a macro using `qq` and realise you need to append something to it (like moving to the next line) you can append to it with `qQ`.
+
+Since macros are just saved into a register, if you want to edit them you can put them into a buffer from that register, then yank the macro back in once edited. When yanking it back into a register, be sure not to yank the whole line so you don't get trailing newline characters in your macro.
+
+Golden rule is 'when recording a macro, ensure every command is repeatable'.
+
+- Start by normalizing the cursor position
+- Macros fail if any of their motions do, consider this a feature rather than a bug
+  - Lets you do something like `100@q` if your motion is targeted enough
+- Macros can also capture find & dot commands, so repeating something like `;.` is valid
+
+- `@@` invokes the most recently invoked macro
+
 ## Modes
 
 ### Insert Mode
