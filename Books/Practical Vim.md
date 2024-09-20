@@ -126,12 +126,39 @@ Can all be combined with a motion to specify the range they apply to.
 - `<` indent left or `>` right
 - `!` filter through an external program
 
-## Search
+## Patterns
+
+Matched text can be referenced with `\{number}` after the regex. `\0` captures the whole match, which `\n` captures the nth capture group (in `()`). This can then be referenced in a substitute command like `%s/\1/replacement`.
+
+Remember backslashes always need to be escaped to be treated as literals, even with `\V`. Same for `/` if searching forward and `?` for back.
+
+- `<` and `>` are word boundary characters, so `/\vthe>` will not match 'there' or 'their'.
+- `\w` matches any word character, while `\W` matches any non-word character
+- `\zs` and `\ze` can be used to indicate only part if a pattern should be capturede as the match.
+  - `/Practical \zsVim` will find all instances of 'Practical Vim', but only highlight the 'Vim' part
+  - Useful when part of the pattern is critical for finding the match, but shouldn't actually be operated on. e.g. text in quotes
+
+### Search
+
+You can browse your search history with the up & down arrow keys.
+
+While searching incrementally, `Ctrl-r Ctrl-w` autofills the full word the current incremental search result is hovering over.
+
+Appending `/e` to a search places your cursor at the end of the match rather than the start. If you wanna add the offset after already searching, just run a blank search with `/e` appended like `//e`, as the last pattern will automatically be reused.
 
 - `*` searches for the word under the cursor and can be incremented/decremented like `/`
-- `?` Is a backward search, inverse of `/`, still `n` for next occurrence, `N` for previous occurrence
+- `?` Is a backward search, inverse of `/`
+  - You can reverse search direction by starting a blank search in the opposite direction, as the previous pattern is used by default
+- `n` for next occurrence, `N` for previous occurrence
+  - `gn` is a motion to apply the change to the next match, `gN` for previous
 - `f{char}` searches the line for the next instance of `{char}`, `;` for next occurrence, `,` for previous occurrence, `F{char}` searches backwards
 - `c` appended to a `:%s` search will ask you for confirmation before making each change
+
+### Switches
+
+- Adding a `\c` anywhere in your pattern will ignore case. `\C` will force case sensitivity.
+- `\V` forces the search to be literal, so `a.k.a` will match literally that string, not a, k and a separated by any 2 chars. `\v` does the opposite.
+  - The backslash (escape character) retains its function though.
 
 ## Settings
 
