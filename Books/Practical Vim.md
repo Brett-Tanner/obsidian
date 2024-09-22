@@ -154,6 +154,20 @@ Appending `/e` to a search places your cursor at the end of the match rather tha
 - `f{char}` searches the line for the next instance of `{char}`, `;` for next occurrence, `,` for previous occurrence, `F{char}` searches backwards
 - `c` appended to a `:%s` search will ask you for confirmation before making each change
 
+### Substitution
+
+The first arg to `:s`, which is usually `%` for me, is the (vertical) range to act on. Can be a visual selection if one is active when `:s` invoked.
+
+When using the `/c` flag to confirm substitutions, `a` substitutes all remaining matches while `q` quits.
+
+The replacement arg can be `\n` to substitute the nth match, or `\0` to substitute the whole match. You can use this to switch the order of words, for example `:s/\v(for) (example)/\2 \1` will switch 'for example' to 'example for'.
+
+You can use the contents of a register as the replacement value, e.g. `:%s/pattern/\=@"/g` to replace with the contents of the default register.
+
+`g&` repeats the last substitution, but with `%` as the range. `&&` repeats the last substitute command with the curent range (current line by default).
+
+Using `\={vimscript}` in a substitution will execute the given vimscript, e.g. to increment a matched number `:%s/{pattern}/\=submatch(0)+1/g`. `submatch` is needed to refer to capture groups when evaluating vimscript, rather than the usual `\n`.
+
 ### Switches
 
 - Adding a `\c` anywhere in your pattern will ignore case. `\C` will force case sensitivity.
