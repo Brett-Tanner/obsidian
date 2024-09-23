@@ -9,6 +9,16 @@
 - `@:` repeats the last command
 - `:s/target/replacement` replaces the next instance of `target` with `replacement` and is repeatable with `&` (but only on the current line)
 
+### Global
+
+`:g/{pattern}/{command}` executes `command` on all lines that match `pattern`. Can be inverted with `:g!` (or just `:v`, which executes `command` on all lines that don't match `pattern`.
+
+Remember commands typically take a range as well, so you can do something like `:g/{start}/.,{end}/{cmd}` to execute `cmd` on all lines between `start` and `end`.
+
+For example, to delete html tags on all lines, you'd use `:g/\v<\/?\w+>/d`. If you wanted to delete all lines of a html file without links, you'd use `:v/href/d`.
+
+You could also use it to yank all TODO/FIXME in a file to a register. First empty the register with `q{reg}q`, then `:g/\vTODO|FIXME/yank {capital_reg}`. It's important to use the capital version of a register so each line is appended, rather than overwriting the preceding line. You could also just use `t$` rather than the yank command to dump them all at the end of the file.
+
 ## Copying
 
 - `:reg` (or for me, just hitting backtick) shows you all registers and their contents
