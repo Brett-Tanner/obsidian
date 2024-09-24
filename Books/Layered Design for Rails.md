@@ -3,6 +3,8 @@ title: Layered Design for Rails Applications
 description: A book on designing Rails apps in a layered fashion
 ---
 
+Overall thesis seems to be that MVC is too limited for any decently-sized app. Additional layers of abstraction like service objects are needed to avoid models becoming god objects.
+
 ## Chapter 4: Antipatterns
 
 Callbacks, concerns and global state can all lead to code that violates separation of concerns. This chapter looks at how to use them while minimising this drawback.
@@ -53,6 +55,32 @@ The [Interactor](https://github.com/collectiveidea/interactor) gem provides an e
 It's important to not just dump everything into a service, model logic should still stay on the model to avoid anemic models (losing the benefits of OOP) and services should be abstracted into a single service if commonalities emerge.
 
 ## Chapter 6: Data Layer Abstractions
+
+### Query Objects
+
+Used to encapsulate complex queries used in multiple places, but not generic enough to define on the model. Suggested to create a base `ApplicationQuery` class with a `resolve` class method that raises a `NotImplemented` error. The initializer should take an active record relation and `resolve` should return one, to enable chaining.
+
+You should probably provide a default initialize value of `Model.all`, and add a `resolve(args)` class method that calls `new(args).resolve` so you can just call it like `QueryObject.resolve(args)`.
+
+If you namespace queries under the model they return a relation of like `Posts::CommentedQuery` you can have your `ApplicationQuery` class infer the default relation passed to `new` using a regex on the class name and `safe_constantize`. It's possible to add the query objects back on as scopes by adding some extra boilerplate to `ApplicationQuery`, but only makes sense to me if used across multiple models, which requires even more boilerplate.
+
+Scopes are preferred when they're atomic, i.e. focused on one thing. But query objects make it easier to encapsulate complex logic relying on multiple fields/associations/ordering, as they're only used in specific circumstances rather than generally available on the model.
+
+Since they're just a sub-layer of the domain layer, it's fine to just put query objects in subfolders named after their model, or 'models/queries' if they're used by multiple. Also end their filenames with '\_query.rb'.
+
+### Arel
+
+Arel is what AR uses under the hood to build queries; it's an AST manager that compiles the tree you build with SQL operation and value nodes to valid SQL.
+
+[`arel-helpers`](https://github.com/camertron/arel-helpers) reduces boilerplate when building queries with Arel.
+
+### Repositories
+
+An intermediate layer between domain models and persistence, allowing upper layers to operate on plain objects without worrying about persistence. They should never return AR relations, only ever plain Ruby collections like arrays or hashes. Similarly, individual objects returned by any `find` analogue should be mapped to some kind of plain object rather than returning an instance of the model, which would still have access to methods like `save` or `update`.
+
+Encouraged to use specific methods like `Post#publish` or `Post#update_draft` rather than `Post.update` as it better represents what's happening, and the respository doesn't have to be reusable with every model in the application.
+
+Similarly, separate methods are added to the repository for each query (e.g. `search(tags)` and `authored_by(user)`). This extracts query logic from the model in a similar way to the query objects introduced above, and respositories becoming god objects can be avoided by creating different repositories for different contexts with only the methods required by that context.
 
 ## Useful Stuff
 
