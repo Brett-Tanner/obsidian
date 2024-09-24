@@ -38,6 +38,22 @@ If there's a separate concept which needs to be shared between multiple models, 
 
 When you have complex validations surrounding some kind of value, consider extracting it as a 'value object' using [`Data.define`](https://docs.ruby-lang.org/en/3.3/Data.html).
 
+## Chapter 5: Adding Abstractions
+
+Incidentally, `head(status)` in a controller returns just the HTTP status code provided, remember I was looking for that at some point.
+
+And `JSON.parse` takes a `symbolize_names` boolean.
+
+### Services
+
+Service Objects encapsulate a specific business operation, and lie between the controller/model layers (invoked in controller to pass data to model). A good example of when to use one would be I'm deciding what to do when an invoice is updated on the event site; the service object could contain all the code for sending emails or not depending on the role of the user and the attributes included in the request body.
+
+The [Interactor](https://github.com/collectiveidea/interactor) gem provides an example of how service objects can be set up, and something like [Dry Monads](https://github.com/dry-rb/dry-monads?tab=readme-ov-file) could provide a way to improve exception handling for them.
+
+It's important to not just dump everything into a service, model logic should still stay on the model to avoid anemic models (losing the benefits of OOP) and services should be abstracted into a single service if commonalities emerge.
+
+## Chapter 6: Data Layer Abstractions
+
 ## Useful Stuff
 
 [Attractor Rails](https://github.com/julianrubisch/attractor-rails) provides a web interface for assessing the quality of Rails projects in terms of churn and complexity
