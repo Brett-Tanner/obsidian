@@ -1,4 +1,7 @@
-# Practical Vim
+---
+title: Practical Vim
+description: Hints & tips on using Vim
+---
 
 - `<>` denotes combinations of keys to be pressed together.
 - `{}` indicates a list of valid keystrokes to follow the preceding command
