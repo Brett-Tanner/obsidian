@@ -3,7 +3,7 @@ title: Layered Design for Rails Applications
 description: A book on designing Rails apps in a layered fashion
 ---
 
-## Antipatterns
+## Chapter 4: Antipatterns
 
 Callbacks, concerns and global state can all lead to code that violates separation of concerns. This chapter looks at how to use them while minimising this drawback.
 
@@ -30,8 +30,13 @@ Drawbacks of concerns are:
 - Private methods are not private to other concerns on same model
 - Naming collisions are difficult to foresee since in separate files
 - Testing is more difficult, ideally want to test in isolation but what if model it's included in has methods etc. that interfere?
+- Callbacks in concerns exacerbate the issues with callbacks, as they're now spread around the codebase.
 
-### Global state
+Basically concerns should be used to encapsulate groups of code related to support functionality; if removing the concern from a model causes its tests to fail it's an extracted chunk of code, not a concern.
+
+If there's a separate concept which needs to be shared between multiple models, it should be extracted to its own model rather than a concern.
+
+When you have complex validations surrounding some kind of value, consider extracting it as a 'value object' using [`Data.define`](https://docs.ruby-lang.org/en/3.3/Data.html).
 
 ## Useful Stuff
 

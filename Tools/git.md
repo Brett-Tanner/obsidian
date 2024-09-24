@@ -7,7 +7,7 @@ description: Notes on more advanced git stuff
 
 These are a way to nest git repos inside your main repo. Add one with `git submodule add {url}`, or clone a repo with its submodules using `git clone --recurse-submodules`.
 
-`git submodule update --remote` will pull the latest changes from HEAD of each submodule's default branch (branch can be configured).
+`git submodule update --remote` will pull the latest changes from HEAD of each submodule's default branch (branch can be configured). You can also just `git pull` as normal if you're in the submodule directory.
 
 [Worktree](https://fev.al/posts/git-worktree/)
 
