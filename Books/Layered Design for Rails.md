@@ -5,6 +5,10 @@ description: A book on designing Rails apps in a layered fashion
 
 Overall thesis seems to be that MVC is too limited for any decently-sized app. Additional layers of abstraction like service objects are needed to avoid models becoming god objects.
 
+## Chapter 1: Abstraction layers
+
+[Attractor Rails](https://github.com/julianrubisch/attractor-rails) provides a web interface for assessing the quality of Rails projects in terms of churn and complexity
+
 ## Chapter 4: Antipatterns
 
 Callbacks, concerns and global state can all lead to code that violates separation of concerns. This chapter looks at how to use them while minimising this drawback.
@@ -108,8 +112,14 @@ Side note that came up here is that scopes are skipped if a `nil` value is retur
 
 ### Presenters
 
+Helpers aren't ideal because they're global by default, and near impossible to limit the scope of in an intuitive way. Presenters solve this by letting you create a presenter for each different context, and being initialized with a base model they can delegate calls to.
+
+Closed presenters expose a subset of the model's interface (through delegation) + the view-specific methods, while open presenters (or decorators) dynamically add new behviours to a class without affecting any other instances of the class. Rails has a built in method to create open presenters, `SimpleDelegator`. [keynote](https://github.com/rf-/keynote) provides an example of closed presenters.
+
+Be sure not to instantiate presenters too early (like in the controller) as there's a risk of them leaking back to lower layers of abstraction and being used in situations that expect a plain model.
+
 ### Serializers
 
-## Useful Stuff
+Typically done by overriding `#as_json` on the model, but can also be done by creating a presenter as above but calling it a serializer and defining an `#as_json` method. [alba](https://github.com/okuramasafumi/alba) provides a DSL for doing so.
 
-[Attractor Rails](https://github.com/julianrubisch/attractor-rails) provides a web interface for assessing the quality of Rails projects in terms of churn and complexity
+## Chapter 9: Authorization
