@@ -82,6 +82,34 @@ Encouraged to use specific methods like `Post#publish` or `Post#update_draft` ra
 
 Similarly, separate methods are added to the repository for each query (e.g. `search(tags)` and `authored_by(user)`). This extracts query logic from the model in a similar way to the query objects introduced above, and respositories becoming god objects can be avoided by creating different repositories for different contexts with only the methods required by that context.
 
+## Chapter 7: Handling User Input
+
+### Form Objects
+
+Used to handle a specific process represented by a form, e.g. sending emails if requested, checking Ts & Cs are accepted, without adding code to the underlying model.
+
+Most useful when there are multiple contexts in which you might need a form for a given model, each requiring their own logic. They're especially useful on 'multi-model' forms, which may or may not need to create other models associated with the primary model depending on selections within the form. Model-less forms are also a good application of form objects, for example a feedback form which simply sends the feedback as an email to support.
+
+You wanna implement at least `new` and `save` methods, with the validations/email logic etc. as private methods, so you can use the form object in your controller just like you would with a model. Including `ActvieModel::API` gives validation support, while `ActiveModel::Attributes` gives you the attributes API.
+
+These inclusions also give you the ability to use the form object with `form_with` just like you would the underlying model, though you'll need to override `#model_name` to the name of the underlying model in order for route generation to work.
+
+If relying on validations in the underlying model, you'll also want to make sure its errors merged into the form object errors so they can be displayed. Never add form object-specific validations to a model though, as that defeats the point of form objects.
+
+### Filter Objects
+
+Used to encapsulate complex filtering/search logic rather than sticking it in a controller/model scopes. Used like `ModelFilter.filter(Model.all, params)` in the controller. Distinct from query objects as they accept and process user input, which query objects should never interact with.
+
+Suggests using [rubanok](https://github.com/palkan/rubanok) for boilerplate.
+
+Side note that came up here is that scopes are skipped if a `nil` value is returned from their lambda/block, so something like `scope :filter_by_status(status), -> { where(status:) if %w[published draft] }` will apply the filter if the passed status is valid, and simply skip the filter without disrupting any method chain if the passed status is nil/invalid. THIS IS A HUGE IMPROVEMENT ON HOW I WAS HANDLING COMPLEX SEARCH QUERIES ON THE KIDSUP SITES.
+
+## Chapter 8: Representation layer
+
+### Presenters
+
+### Serializers
+
 ## Useful Stuff
 
 [Attractor Rails](https://github.com/julianrubisch/attractor-rails) provides a web interface for assessing the quality of Rails projects in terms of churn and complexity
