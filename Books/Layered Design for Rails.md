@@ -123,3 +123,11 @@ Be sure not to instantiate presenters too early (like in the controller) as ther
 Typically done by overriding `#as_json` on the model, but can also be done by creating a presenter as above but calling it a serializer and defining an `#as_json` method. [alba](https://github.com/okuramasafumi/alba) provides a DSL for doing so.
 
 ## Chapter 9: Authorization
+
+### Authorization Models
+
+Basically just says to use Pundit, though the author prefers ActionPolicy.
+
+One idea for an abstraction is to group the auth logic into `#view` (index & show) and `#manage` (everything else) methods, which the corresponding action checks redirect to be default unless a custom check is defined.
+
+## Chapter 10: Notifications
