@@ -124,10 +124,30 @@ Typically done by overriding `#as_json` on the model, but can also be done by cr
 
 ## Chapter 9: Authorization
 
-### Authorization Models
-
 Basically just says to use Pundit, though the author prefers ActionPolicy.
 
 One idea for an abstraction is to group the auth logic into `#view` (index & show) and `#manage` (everything else) methods, which the corresponding action checks redirect to be default unless a custom check is defined.
 
 ## Chapter 10: Notifications
+
+Recommends extracting a notifications layer, as otherwise service objects can become cluttered with notification related code if you want to have multiple methods like email/internal notification/SMS. Not really a compelling argument if just using email, unless you send a lot of different ones in response to an action.
+
+The notification layer should be responsible for:
+
+- Deciding on the communication channel to use for a user/notification combo
+- Preparing notification payloads
+- Interacting with delivery services
+
+One possible implementation is to have generic plugins for each communication method which the notification layer simply passes arguments to like a controller, with the plugins containing all logic regarding constructing the payload and whether or not to send.
+
+[Active Delivery](https://github.com/palkan/active_delivery) Provides 'delivery objects' which use delivery lines to connect with notifiers or notification backends. Comes with mailer delivery line by default, others need to be added.
+
+[Noticed](https://github.com/excid3/noticed) takes a simpler approach, grouping all logic for different communication methods for a single notification in a single object. Supports many delivery methods out of the box and has plugins.
+
+Brings up the idea of using a single bit column to represent multiple preferences, and adding helper methods using bitwise operations to work with it. Bit much for KidsUP but might be a useful idea in the future. Querying by individual preferences of a bit field is a hassle, as expected.
+
+Also mentions using StoreModel like I did, with the caveat that the JSONB col can get really big and slow down queries on the User table.
+
+So if you need to persist heaps of notifications rather than just soft-capping them at 10 like I did, use a separate table.
+
+# Chapter 11: HTML Views
