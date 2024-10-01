@@ -176,4 +176,22 @@ Since different aspects of config/secrets are best kept in different locations, 
 
 Config objects also allow you to do validations or transformations on the config values.
 
-## Chapter 13:
+## Chapter 13: Cross-layer concerns
+
+### Logging & Exceptions
+
+All the stuff which makes the application work but isn't business logic, like DB adapters, caching, config, web servers, etc. Rails has abstraction layers, often many, over all of these, which help insulate it from changes in the specific implementations relied on under the hood.
+
+For example `Rails.logger` separates you from the logging implementation and provides an API with logging levels like `debug` and `info`, while allowing extension with log formatters and tagging.
+
+Logging tags can be provided a proc to extract any info from the request to be used as a tag.
+
+Can use `Rails.error` instead of service specific error logging like Sentry or Honeybadger.
+
+### Instrumentation
+
+How you track performace, system metrics and any other custom metrics you need.
+
+Can use `ActiveSupport::Notifications` to publish events and listen with `ActiveSupport::Notifications.subscribe` for them then perform logging/other side effects, or log from a source using a `*LogSubscriber` inheriting from `ActiveSupport::LogSubscriber`.
+
+Subscribers are executed synchronously right after the event occurs, so don't want to have any heavy code in them. Maybe a background job, or a metric ingest system like [yabeda](https://github.com/yabeda-rb/yabeda).
