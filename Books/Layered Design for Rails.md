@@ -151,3 +151,9 @@ Also mentions using StoreModel like I did, with the caveat that the JSONB col ca
 So if you need to persist heaps of notifications rather than just soft-capping them at 10 like I did, use a separate table.
 
 # Chapter 11: HTML Views
+
+Complains that it's difficult to know which local variables are available/required for a partial, but mitigated by strict locals these days.
+
+Preferred approach is view components, like Github does it. Allows for unit testing components with `render_inline`.
+
+# Chapter 12: Configuration
