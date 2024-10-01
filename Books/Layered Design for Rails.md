@@ -150,10 +150,30 @@ Also mentions using StoreModel like I did, with the caveat that the JSONB col ca
 
 So if you need to persist heaps of notifications rather than just soft-capping them at 10 like I did, use a separate table.
 
-# Chapter 11: HTML Views
+## Chapter 11: HTML Views
 
 Complains that it's difficult to know which local variables are available/required for a partial, but mitigated by strict locals these days.
 
 Preferred approach is view components, like Github does it. Allows for unit testing components with `render_inline`.
 
-# Chapter 12: Configuration
+## Chapter 12: Configuration
+
+Confirms it's the master key you need to be able to share the secrets .yml file between developers.
+
+Also confirms most people use ENV variables for secrets, but points out there are issues with using a schema-less dumping file for secrets as they become more numerous. Also production ENV can't be kept in source control, so needs to be shared manually for local testing.
+
+Suggests splitting into settings & secrets; settings defined with ENV but have sensible defaults if missing, secrets further split into essential (DB etc.) and secondary (external APIs, analytics).
+
+If an essential secret is missing starting the app should throw an error, whereas if a secondary secret is missing the module that requires it should simply be disabled.
+
+Prefers avoiding `Rails.env` checks as it makes it difficult to add new environments, and some like staging might be combination of other environments. Best to use per-feature flags instead.
+
+### Config Objects
+
+Since different aspects of config/secrets are best kept in different locations, and we don't want `Rails.application.config` keeping track of everything, suggests creating specialised config objects for each thing that requires them.
+
+[Anyway Config](https://github.com/palkan/anyway_config) is suggested as a way to do this, since it lets you define the expected config values, provide defaults/make them required and automatically loads from a variety of available sources.
+
+Config objects also allow you to do validations or transformations on the config values.
+
+## Chapter 13:
