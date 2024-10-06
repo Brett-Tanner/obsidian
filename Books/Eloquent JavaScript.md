@@ -56,3 +56,59 @@ You can use destructuring in the args to a function, so if you're passing a 3 el
 Optional property access (`?.`) can be used with functions (`func?.()`) and square bracket property access (`obj?.[key]`)
 
 # Chapter 5 - Higher Order Functions
+
+Mentions that a loop can be faster than chaining higher order stuff like `map`, `filter`, etc. as you're not instantiating a new array each time, but usually readability is more important.
+
+# Chapter 6 - OOP
+
+When defining functions with `function`, `this` in a method refers to the object it's called on, even if the method was defined outside the object and later added to it. On the other hand, arrow functions have access to the `this` value from where they're defined.
+
+Alternately you can call the function like `func.call(this, ...args)` to provide an explicit `this`.
+
+Shorthand for defining a function on an object is `let obj = { funcName(args) { body } }`.
+
+Getters and setters have 'get/set' before their names like `const obj = { get prop() { return this.prop.toString() } }`. Especially useful if you want 'virtual' properies derived from an actual property, like a `Temperature` object which internally stores only celsius but has a getter/setter for fahrenheit, which is derived from/adjusts the celsius value appropriately.
+
+## Classes
+
+Adding a `#` at the start of a method name makes it private. You can also add private properties in the same way, however they must be created in the constructor, it's not possible to assign them after creation.
+
+Methods or properties with `static` before their name are stored on the constructor, allowing them to be used to create new instances of the class. For example, in the `Temperature` example mentioned above, the regular constructor likely takes a temperature in celsius. However you could define `static fromFahrenheit(fTemp) { return new Temperature(f to c conversion) }` on the class to enable instances to be initialized from a fahrenheit temperature.
+
+The inheritance syntax is `class SubClass extends SuperClass { ... }`. When `super` is used in the constructor (must be before any `this` calls), it calls the `SuperClass` constructor. When used outside the constructor it enables accessing properties on the parent class, like `super.parentClassMethod()` or `super.parentProperty`.
+
+## Prototypes
+
+You can use `Object.create(prototype)` to create an object which 'inherits' the properties from `prototype`.
+
+Using a plain object as a map/hash has issues, for example it inherits from `Object.prototype` so has `.toString()` as a 'key', and keys must be strings. You can get around the inherited methods using `const map = Object.create(null)`, and for the second issue there's a `Map` class which allows any type of keys.
+
+Also useful to note `Object.keys()` only returns the objects own keys, not those inherited from the prototype, and you can use `Object.hasOwn(obj, property)` as an alternative to `in` if you want to exclude inheriteed properties.
+
+Remember `instanceof` looks up the prototype chain, not just at the object itself.
+
+## Symbols
+
+Unique values defined like `const foo = Symbol('foo')`.
+
+The string you pass is just what you get when converting the symbol to a string, used for identification. Two symbols created by passing the same string are not equal, and the symbol is not the string. `Symbol('a') != Symbol('a')`, even though `Symbol('a').toString() === Symbol('a').toString()`.
+
+They allow you to define property names which might otherwise conflict with another property, for example `length` on Array.
+
+```js
+const length = Symbol("length");
+Array.prototype[length] = 0;
+
+console.log([1, 2].length);
+// 2
+console.log([1, 2][length]);
+// 0
+```
+
+You can use a symbol as a property name in an object declaration by wrapping it in `[]` like `const obj = { [length]: 0 }`.
+
+## Iterators
+
+To make an object iterable you need to define a method named with `Symbol.iterator`, which is a symbol value defined by the language for this purpose. In addition to letting you use `for ... of` with the object, it also enables the spread operator (`...`) to spread the object's values into an array.
+
+When called, that method should return an object which implements the iterator interface (`next()`; which returns the next result, `value`; the next value if any and `done`; which should be true if there are no more results).
