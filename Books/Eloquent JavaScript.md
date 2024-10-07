@@ -17,6 +17,8 @@ When ordering strings, uppercase are always 'less' than lowercase because they'r
 
 For strings, `.indexOf()` can take a multi-character string.
 
+You can pass a function as the second arg to `.replace()`
+
 ## Numbers
 
 `NaN` is the only value in JS not equal to itself.
@@ -26,6 +28,8 @@ For strings, `.indexOf()` can take a multi-character string.
 Exponentiation is `**`.
 
 `do { body } while (condition)` will always execute at least once.
+
+You can assign a variable inside an `if` statement, and the variable will be available in that statement.
 
 # Chapter 3 - Functions
 
@@ -126,3 +130,60 @@ The issue with exceptions is they can cause the program to completely abandon it
 Without strict mode, `for (i = 0; ...)` won't complain about the missing `let`, and will instead assign `i` as a global variable.
 
 In strict mode, `this` is undefined for functions not called as methods. Without strict, it refers to the global scope.
+
+# Chapter 9 - Regex
+
+Can be created with `/regex/` or `new RegExp("regex")`.
+
+`\w` won't match international word characters like kanji, as the initial simplistic implementation didn't consider them. However `\s` does match international whitespace characters for some reason.
+
+Important to remember it will seek forward until it doesn't match, then backtrack one by one trying for a match. This can have serious performance implications, so I guess try not to start the regex with anything overly broad that might cause a lot of backtracking.
+
+'Greedy' operators like `*` and `+` match as much as possible, they can be made non-greedy (only matching more when the remaining pattern does not fit the smaller match) by appending `?`.
+
+## Methods
+
+- `.exec(string)` returns null if no match is found and an object containing the match (or an array of matched groups) otherwise
+  - The returned object has an `index` property which is the index of the match in the string
+  - And `source` which is the original string
+  - If subexpressions (`()`) are used, the elements of the object after the first will be all matched groups
+    - Unmatched subexpressions will be represented by an `undefined` in the resulting object
+    - If there are multiple matches, only the last ends up in the object
+  - strings have a similar method called `.match(regex)`
+- `.test(string)` returns true if the string contains a match
+- `"string".search(regex)` returns the index of the first match, or -1 if no match (like `indexOf`)
+
+## Syntax
+
+- `-` between two characters creates a range between them (using unicode char codes)
+- `\d` matches any digit, `\D` matches any non-digit
+- `\s` matches any whitespace (tab, newline, space etc.), `\S` matches any non-whitespace
+- `\w` matches any alphanumeric character, `\W` matches any non-alphanumeric character
+- `\p{property}` matches any character with the specified property (though you need to put `u` at the end of the regex), `\P` matches any character without the specified property
+- `.` matches any character except newline
+- `+` matches one or more of the preceding character, `*` matches zero or more
+- `?` matches zero or one, making that part of the pattern optional
+- `^` matches the beginning of the string, `$` matches the end
+- `|` matches either of the two patterns
+- `(?=char)` is a lookahead, which requires `char` for a match but does not include it in that match
+- `{num}` requires the char to appear exactly `num` times, and can also be given a range like `{start, end}`. It's possible to specify an endless range.
+- Enclosing a section of the regex in `()` makes it count as a single element to the operators following it.
+  - It also creates a subexpression, if you don't want that add a `?` after the opening bracket
+  - Subexpressions can be referenced when calling `.replace()` on a string, like `"string".replace(/(group1) (group2)/, "$2, $1")`
+  - `$&` refers to the whole match
+- `[]` matches on the presence of any single character in the brackets (so `/[\d.]/` matches any digit or period), and removes the special meaning of symbols like `.` or `+`
+
+## Options
+
+- `//i` makes the regex case insensitive
+- `//u` makes the regex unicode aware
+  - You'll need this if matching emoji or anything else made up of multiple code units like Han script
+- `//g` makes the regex global (find all matches)
+  - Unless you're trying to replace items in a string, probably prefer using the `.matchAll()` method
+  - It returns an array of match objects, whereas `.match()` returns an array of strings when used with a global regex
+
+## Dates
+
+Called Date but actually represents a point in time if instantiated with `new Date()`. Month numbers start at 0, but days at 1. Because Javascript.
+
+`.getTime()` on a Date object gives you the Unix timestamp.
