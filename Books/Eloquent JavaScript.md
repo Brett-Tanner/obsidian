@@ -112,3 +112,17 @@ You can use a symbol as a property name in an object declaration by wrapping it 
 To make an object iterable you need to define a method named with `Symbol.iterator`, which is a symbol value defined by the language for this purpose. In addition to letting you use `for ... of` with the object, it also enables the spread operator (`...`) to spread the object's values into an array.
 
 When called, that method should return an object which implements the iterator interface (`next()`; which returns the next result, `value`; the next value if any and `done`; which should be true if there are no more results).
+
+# Chapter 8 - Bugs & Errors
+
+Exceptions unwind the stack until they hit a `try` block which can catch them. They're created like `throw new Error()`. You can also include code you want to ensure is run regardless of whether or not an exception is thrown in a `finally` block, after `try` and in addition to/instead of `catch`.
+
+You can't selectively catch certain types of exception in JS, an interesting design choice. So you need to manually check for it in the `catch` using the `e` param, book suggests creating an `Error` subclass if one doesn't exist for your situation like `class TypoError extends Error` and checking if `e` is an instance of that subclass.
+
+The issue with exceptions is they can cause the program to completely abandon its work, leaving any side effects in place. Since exceptions can be thrown anywhere and handled somewhere completely different, it can be difficult/complex to correctly clean up these side effects.
+
+## Strict Mode
+
+Without strict mode, `for (i = 0; ...)` won't complain about the missing `let`, and will instead assign `i` as a global variable.
+
+In strict mode, `this` is undefined for functions not called as methods. Without strict, it refers to the global scope.
