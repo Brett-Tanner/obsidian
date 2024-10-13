@@ -3,13 +3,13 @@ title: Eloquent JavaScript (4th Edition)
 description: An introduction to JS, and a refresher for me before I start at Moneytree
 ---
 
-# Chapter 1 - Values, Types & Operators
+## Chapter 1 - Values, Types & Operators
 
 `null` & `undefined` only equal each other, so if you check for equality with `null` you know it's also not undefined.
 
 `??` is like `||` but only returns the right hand value if the left hand value is exactly `null` or `undefined`. Can be preferable to `||` because, for example, `0 || 100` returns 100 because 0 is coerced to `false`, but `0 ?? 100` returns 0.
 
-## Strings
+### Strings
 
 If you want a literal newline or to interpolate you need to use backticks (``) but the escaped version (\n) works in anything. There are no differences between '' and "" other than needing to escape the same quotation marks.
 
@@ -19,11 +19,11 @@ For strings, `.indexOf()` can take a multi-character string.
 
 You can pass a function as the second arg to `.replace()`
 
-## Numbers
+### Numbers
 
 `NaN` is the only value in JS not equal to itself.
 
-# Chapter 2 - Program Structure
+## Chapter 2 - Program Structure
 
 Exponentiation is `**`.
 
@@ -31,7 +31,7 @@ Exponentiation is `**`.
 
 You can assign a variable inside an `if` statement, and the variable will be available in that statement.
 
-# Chapter 3 - Functions
+## Chapter 3 - Functions
 
 Function definitions can be nested within function definitions.
 
@@ -39,7 +39,7 @@ You can pass extra args to a function and it'll just ignore them without throwin
 
 Apparently a loop is generally more performant than recursion.
 
-# Chapter 4 - Data Structures
+## Chapter 4 - Data Structures
 
 If you want to access an Object property in a similar way to `send` in Ruby, use `[]`. For example if you wanna dynamically access the property stored in some variable (`Object[var]`) or access a property which wouldn't work as a dot property (`Object["Wouldn't work"]`). Incidentally, this is how array index accesses work.
 
@@ -59,11 +59,11 @@ You can use destructuring in the args to a function, so if you're passing a 3 el
 
 Optional property access (`?.`) can be used with functions (`func?.()`) and square bracket property access (`obj?.[key]`)
 
-# Chapter 5 - Higher Order Functions
+## Chapter 5 - Higher Order Functions
 
 Mentions that a loop can be faster than chaining higher order stuff like `map`, `filter`, etc. as you're not instantiating a new array each time, but usually readability is more important.
 
-# Chapter 6 - OOP
+## Chapter 6 - OOP
 
 When defining functions with `function`, `this` in a method refers to the object it's called on, even if the method was defined outside the object and later added to it. On the other hand, arrow functions have access to the `this` value from where they're defined.
 
@@ -73,7 +73,7 @@ Shorthand for defining a function on an object is `let obj = { funcName(args) { 
 
 Getters and setters have 'get/set' before their names like `const obj = { get prop() { return this.prop.toString() } }`. Especially useful if you want 'virtual' properies derived from an actual property, like a `Temperature` object which internally stores only celsius but has a getter/setter for fahrenheit, which is derived from/adjusts the celsius value appropriately.
 
-## Classes
+### Classes
 
 Adding a `#` at the start of a method name makes it private. You can also add private properties in the same way, however they must be created in the constructor, it's not possible to assign them after creation.
 
@@ -81,7 +81,7 @@ Methods or properties with `static` before their name are stored on the construc
 
 The inheritance syntax is `class SubClass extends SuperClass { ... }`. When `super` is used in the constructor (must be before any `this` calls), it calls the `SuperClass` constructor. When used outside the constructor it enables accessing properties on the parent class, like `super.parentClassMethod()` or `super.parentProperty`.
 
-## Prototypes
+### Prototypes
 
 You can use `Object.create(prototype)` to create an object which 'inherits' the properties from `prototype`.
 
@@ -91,7 +91,7 @@ Also useful to note `Object.keys()` only returns the objects own keys, not those
 
 Remember `instanceof` looks up the prototype chain, not just at the object itself.
 
-## Symbols
+### Symbols
 
 Unique values defined like `const foo = Symbol('foo')`.
 
@@ -111,7 +111,7 @@ console.log([1, 2][length]);
 
 You can use a symbol as a property name in an object declaration by wrapping it in `[]` like `const obj = { [length]: 0 }`.
 
-## Iterators
+### Iterators
 
 To make an object iterable you need to define a method named with `Symbol.iterator`, which is a symbol value defined by the language for this purpose. In addition to letting you use `for ... of` with the object, it also enables the spread operator (`...`) to spread the object's values into an array.
 
@@ -119,7 +119,7 @@ When called, that method should return an object which implements the iterator i
 
 Another way to write iterators is like `function* generatorName() { iteration/loop logic }`, and calling `yield` to pass the loop value out. The benefit of this is not needing to manually create an object to save the local state (value/done); generators do it automatically.
 
-# Chapter 8 - Bugs & Errors
+## Chapter 8 - Bugs & Errors
 
 Exceptions unwind the stack until they hit a `try` block which can catch them. They're created like `throw new Error()`. You can also include code you want to ensure is run regardless of whether or not an exception is thrown in a `finally` block, after `try` and in addition to/instead of `catch`.
 
@@ -127,13 +127,13 @@ You can't selectively catch certain types of exception in JS, an interesting des
 
 The issue with exceptions is they can cause the program to completely abandon its work, leaving any side effects in place. Since exceptions can be thrown anywhere and handled somewhere completely different, it can be difficult/complex to correctly clean up these side effects.
 
-## Strict Mode
+### Strict Mode
 
 Without strict mode, `for (i = 0; ...)` won't complain about the missing `let`, and will instead assign `i` as a global variable.
 
 In strict mode, `this` is undefined for functions not called as methods. Without strict, it refers to the global scope.
 
-# Chapter 9 - Regex
+## Chapter 9 - Regex
 
 Can be created with `/regex/` or `new RegExp("regex")`.
 
@@ -143,7 +143,7 @@ Important to remember it will seek forward until it doesn't match, then backtrac
 
 'Greedy' operators like `*` and `+` match as much as possible, they can be made non-greedy (only matching more when the remaining pattern does not fit the smaller match) by appending `?`.
 
-## Methods
+### Methods
 
 - `.exec(string)` returns null if no match is found and an object containing the match (or an array of matched groups) otherwise
   - The returned object has an `index` property which is the index of the match in the string
@@ -155,7 +155,7 @@ Important to remember it will seek forward until it doesn't match, then backtrac
 - `.test(string)` returns true if the string contains a match
 - `"string".search(regex)` returns the index of the first match, or -1 if no match (like `indexOf`)
 
-## Syntax
+### Syntax
 
 - `-` between two characters creates a range between them (using unicode char codes)
 - `\d` matches any digit, `\D` matches any non-digit
@@ -175,7 +175,7 @@ Important to remember it will seek forward until it doesn't match, then backtrac
   - `$&` refers to the whole match
 - `[]` matches on the presence of any single character in the brackets (so `/[\d.]/` matches any digit or period), and removes the special meaning of symbols like `.` or `+`
 
-## Options
+### Options
 
 - `//i` makes the regex case insensitive
 - `//u` makes the regex unicode aware
@@ -184,19 +184,19 @@ Important to remember it will seek forward until it doesn't match, then backtrac
   - Unless you're trying to replace items in a string, probably prefer using the `.matchAll()` method
   - It returns an array of match objects, whereas `.match()` returns an array of strings when used with a global regex
 
-## Dates
+### Dates
 
 Called Date but actually represents a point in time if instantiated with `new Date()`. Month numbers start at 0, but days at 1. Because Javascript.
 
 `.getTime()` on a Date object gives you the Unix timestamp.
 
-# Chapter 10 - Modules
+## Chapter 10 - Modules
 
 Remember you can change the name of an imported binding like `import { foo as bar } from 'module'`.
 
 If you're importing a default export, you can drop the `{}`. `*` can be used to import everything from a module (you must provide a name to access them on).
 
-# Chapter 11 - Async
+## Chapter 11 - Async
 
 Create a promise with `cont p = Promise.resolve(value)`, and use `.then((promiseValue) => {})` to act on it once resolved. `.then()` returns a promise, so you can chain calls.
 
@@ -214,7 +214,7 @@ When running multiple async functions at once, better to return a value from eac
 
 `Promise.all()` takes an array of promises and returns a promise that resolves to an array of the results of the promises in the order they were resolved.
 
-# Chapter 12 - BYO Language
+## Chapter 12 - BYO Language
 
 A parser reads some text and outputs a data structure (AST) reflecting the structure of the program expressed by that text. Nodes in the AST have a set of properties based on their type, for example the node for a function might have its args and the body of the function as properties.
 
