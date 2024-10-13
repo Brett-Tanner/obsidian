@@ -117,6 +117,8 @@ To make an object iterable you need to define a method named with `Symbol.iterat
 
 When called, that method should return an object which implements the iterator interface (`next()`; which returns the next result, `value`; the next value if any and `done`; which should be true if there are no more results).
 
+Another way to write iterators is like `function* generatorName() { iteration/loop logic }`, and calling `yield` to pass the loop value out. The benefit of this is not needing to manually create an object to save the local state (value/done); generators do it automatically.
+
 # Chapter 8 - Bugs & Errors
 
 Exceptions unwind the stack until they hit a `try` block which can catch them. They're created like `throw new Error()`. You can also include code you want to ensure is run regardless of whether or not an exception is thrown in a `finally` block, after `try` and in addition to/instead of `catch`.
@@ -187,3 +189,39 @@ Important to remember it will seek forward until it doesn't match, then backtrac
 Called Date but actually represents a point in time if instantiated with `new Date()`. Month numbers start at 0, but days at 1. Because Javascript.
 
 `.getTime()` on a Date object gives you the Unix timestamp.
+
+# Chapter 10 - Modules
+
+Remember you can change the name of an imported binding like `import { foo as bar } from 'module'`.
+
+If you're importing a default export, you can drop the `{}`. `*` can be used to import everything from a module (you must provide a name to access them on).
+
+# Chapter 11 - Async
+
+Create a promise with `cont p = Promise.resolve(value)`, and use `.then((promiseValue) => {})` to act on it once resolved. `.then()` returns a promise, so you can chain calls.
+
+If any promise in a chain is rejected, the whole chain is marked as rejected and no further success callbacks are made.
+
+`.catch(handlerFunc(err))` resolves to the normal value if no errors occur, or to the result of the handler function if a promise in the chain is rejected. As an alternative you can pass a rejection handler as the 2nd value to `.then()`.
+
+Methods can also use the `async` keyword.
+
+Without promises, if you use something like `.setTimeout()` in a `try` block, the catch won't do anything in the event of failure as it won't be on the stack by the time `.setTimeout()` throws.
+
+Async functions/`.setTimeout()` can be delayed by a long running process, even if they've already been resolved.
+
+When running multiple async functions at once, better to return a value from each then act on them together rather than trying to have them all mutate shared state.
+
+`Promise.all()` takes an array of promises and returns a promise that resolves to an array of the results of the promises in the order they were resolved.
+
+# Chapter 12 - BYO Language
+
+A parser reads some text and outputs a data structure (AST) reflecting the structure of the program expressed by that text. Nodes in the AST have a set of properties based on their type, for example the node for a function might have its args and the body of the function as properties.
+
+The AST is the run by an evaluator, whic you pass the syntax tree and a scope object associating names with values. For each node the evaluator returns a value, e.g. a 'value' node would simply return itself, a 'variable' node would return its binding (if in scope) and a function would be evaluated, with its return value being returned.
+
+Language constructs like `if` or `&&` (at least for this demo language) are just functions stored in a 'Special Forms' object associating the name used to call them with the function body. They may be represented like this because they have special requirements, for example `&&` should only evaluate the right hand side if the left hand side is `true`, but a function passing the two side as args would evaluate both of them when called.
+
+The 'scope' passed to the evaluator maps binding names to their values (so a hash).
+
+Compilers add another step between parsing and evaluation, with the aim of doing as much work as possible beforehand and optimising the code for faster/more efficient execution. Often compiled to machine code, but in theory the compilation target can be anything you want.
