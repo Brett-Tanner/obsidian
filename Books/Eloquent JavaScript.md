@@ -218,10 +218,20 @@ When running multiple async functions at once, better to return a value from eac
 
 A parser reads some text and outputs a data structure (AST) reflecting the structure of the program expressed by that text. Nodes in the AST have a set of properties based on their type, for example the node for a function might have its args and the body of the function as properties.
 
-The AST is the run by an evaluator, whic you pass the syntax tree and a scope object associating names with values. For each node the evaluator returns a value, e.g. a 'value' node would simply return itself, a 'variable' node would return its binding (if in scope) and a function would be evaluated, with its return value being returned.
+The AST is the run by an evaluator, which you pass the syntax tree and a scope object associating names with values. For each node the evaluator returns a value, e.g. a 'value' node would simply return itself, a 'variable' node would return its binding (if in scope) and a function would be evaluated, with its return value being returned.
 
 Language constructs like `if` or `&&` (at least for this demo language) are just functions stored in a 'Special Forms' object associating the name used to call them with the function body. They may be represented like this because they have special requirements, for example `&&` should only evaluate the right hand side if the left hand side is `true`, but a function passing the two side as args would evaluate both of them when called.
 
 The 'scope' passed to the evaluator maps binding names to their values (so a hash).
 
 Compilers add another step between parsing and evaluation, with the aim of doing as much work as possible beforehand and optimising the code for faster/more efficient execution. Often compiled to machine code, but in theory the compilation target can be anything you want.
+
+## Chapter 13-15
+
+Basic browser stuff I knew already
+
+## Chapter 16-17
+
+Animations, canvas stuff in the context of a simple browser game
+
+## Chapter 18 - HTTP & Forms
