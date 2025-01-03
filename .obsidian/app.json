@@ -1,11 +1,10 @@
 {
   "promptDelete": false,
   "mobileToolbarCommands": [
-    "editor:insert-wikilink",
-    "editor:attach-file",
     "editor:toggle-bold",
     "editor:toggle-italics",
     "editor:toggle-code",
+    "editor:set-heading-2",
     "editor:insert-link",
     "editor:indent-list",
     "editor:unindent-list",
