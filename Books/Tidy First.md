@@ -1,3 +1,8 @@
+---
+title: Tidy First
+description: Book about small refactorings & when/why to do them
+---
+
 # Introduction
 
 Offers an answer to the 'when' of software design; when adding features to a component becomes difficult, redesign it to relieve that pressure.
