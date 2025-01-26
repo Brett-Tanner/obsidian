@@ -17,6 +17,8 @@ Remember there's a table called `schema_migrations` rails uses to track which mi
 
 Users are 'roles' with the `LOGIN` privilege in Postgres, and their access info can be stored in a `~/.pgpass` file using a semicolon as a delimiter.
 
+You can create a role without the `LOGIN` privilege and use it as a 'group' to store privileges in by creating the role you want to add to the group `IN` the group role.
+
 ### Terminology
 
 - bloat: allocated but unused space, or space used on old tuples
@@ -53,6 +55,9 @@ You can find the path to your config file from `psql` with `SHOW config_file;`.
 
 - `\c {database}` - connect to a database
   - A database is a logical collection of tables and other objects existing within your PG server.
+- `\d {table}` - shows the columns, indexes and constraints on the table
+  - `\dx` lists all installed extensions
+  - `\dD` lists all domains
 - `\e` - launches your editor, saving and exiting runs the command you've edited
 - `\l` - lists databases
 - `\o {file}` - pipes the output of your queries to a file until toggled back with plain `\o`
@@ -93,3 +98,121 @@ Locks can be created explicitly, but are most often created implicitly be statem
 - `CREATE INDEX {name} ON {table}({column})` - creates an index on a column
   - in prod you probably want the `CONCURRENTLY` keyword after `INDEX` to allow the table to continue to be queried
 - `DROP INDEX {name}` - drops an index
+
+## Chapter 4 - Data Correctness & Consistency
+
+At the application level they're ActiveRecord validations, but at the DB level they're objects used to constrain values on columns, tables or even multiple tables.
+
+You can find them in `pg_constraint`.
+
+Adding a constraint automatically adds an index to make enforcement of the constraint fast, but when adding an index to a database in use you generally want to add the index first and with `CONCURRENTLY` to minimize locking. As the index can be added `CONCURRENTLY` it does not interfere unduly with normal operation, and then speeds up adding the constraint which does.
+
+In a Rails migration you can add the index in a migration which calls `disable_ddl_transaction!` before the `change` block and passes the `algorithm: :concurrently` option to `add_index`.
+
+It's possible to have duplicate constraints as long as they have different names, so watch out for that.
+
+**Possible we have some? How would we check? Hopefully comes up later**
+
+### Fixing Constraint Violations
+
+A simplistic approach is to get all the duplicate rows using `GROUP BY` and delete all but the one with `MIN(id)` or `MAX(id)` however sometimes there is business logic to prioritise which rows should be kept, for example preferring a verified user over an unverified one.
+
+A more customizable approach uses _Common Table Expressions_ (CTE) and the `ROW_NUMBER()` window function with `PARTITION_BY` to order duplicate records by given columns and delete records after a given cutoff in that order. An example is provided by [this blog post](https://sqlfordevs.com/delete-duplicate-rows).
+
+### `CHECK` Constraints
+
+Any condition you can express using SQL which evaluates to a boolean can be a check constraint. Similar to AR validations but in the DB.
+
+Rails support was added in AR 6.1 (so we have it) with `add_check_constraint` in migrations, and `if_exists` was added later.
+
+```ruby
+# in an AR migration
+def change
+    add_check_constraint :trips,
+      "completed_at > created_at",
+      name: "trips_completed_at_check"
+end
+```
+
+```SQL
+-- In SQL
+ALTER TABLE trips
+  ADD CONSTRAINT trips_completed_at_check
+  CHECK (completed_at > created_at);
+```
+
+`INTERVAL` can be useful for time based constraints, for example to require `completed_at` be at least 30m more than `created_at` you'd change the SQL above to:
+
+```SQL
+ALTER TABLE trips
+  ADD CONSTRAINT trips_completed_at_check
+  CHECK (completed_at > (created_at + INTERVAL '30 minutes'));
+```
+
+It's also possible to add check constraints which only enforce their conditions for new row changes using `NOT VALID` in SQL or the `validate: false` option in AR.
+
+This is not possible for `UNIQUE` or `NULL` constraints, but you can use temporary `CHECK` constraints to prepare the table for a future `NOT NULL` or `UNIQUE` constraint by ensuring all new records meet the constraint.
+
+It's also possible to defer some constraints (`UNIQUE`, `PRIMARY KEY`, `REFERENCES` and `EXCLUDE`) using `DEFERRABLE`.
+
+You might want to do this to simplify operations which would otherwise violate constraints, like swapping the order of two items (like the school ordering back at KU for the setsu calendar). In that case, if you defer constraints until the transaction finishes they're never violated.
+
+To enable constraints only at the end of a transaction you can define them with `DEFERRABLE INITIALLY DEFERRED`.
+
+### `EXCLUDE` Constraints
+
+These prevent overlaps between rows within a table, like two people reserving trips on the same taxi at overlapping times.
+
+They use 'GiST' indexes and require an _operator_ class, as well as the `btree_gist` extension (or maybe a similar one) to be enabled.
+
+### Casing
+
+The `citext` extension gives you a `CITEXT` column type which is queried in a case-insensitive way.
+
+This allows, for example, an email to be entered and displayed as "BTAN@gmail.com", but still not allow a duplicate email of "btan@gmail.com" and will match searches foe the downcased version to the upcased one.
+
+Another approach is to use generated columns (virtual columns; `t.virtual`, in ActiveRecord), which PG will keep up to date for you by applying a transformation to the column they're derived from. Generated columns can be stored or not.
+
+### Enums
+
+- A PG type
+- Values can be added to the beginning or end of an enum, but not in the middle
+- Enum values cannot be dropped
+- Can by found in `pg_type`
+- Can be used as a column type across multiple tables
+
+In an AR migration `create_enum` creates the type, then you can set a column to the `enum` type and specify `enum_type: :my_enum` in the options.
+
+```ruby
+create_enum :account_type, %w[personal business]
+
+def change
+  add_column :users, :enum, enum_type: :account_type
+end
+```
+
+Or in SQL:
+
+```SQL
+CREATE TYPE account_type AS ENUM ('personal', 'business');
+```
+
+'Domains' are very similar, but can have additional constraints like `NOT NULL` attached and are defined using `CHECK` constraints like:
+
+```SQL
+CREATE DOMAIN account_type AS TEXT
+CONSTRAINT account_type_check CHECK (
+    VALUE IN ('personal', 'business')
+);
+```
+
+### ActiveRecord Validations
+
+To create custom validators extend `ActiveModel::Validator` and add a `validate(record)` method.
+
+You can also validate individual attributes by extending `ActiveModel::EachValidator` and adding a `validate_each(record, attribute, value)` method.
+
+### Useful Gems
+
+- [active_record_doctor](https://github.com/gregnavis/active_record_doctor)
+- [database_consistency](https://github.com/djezzzl/database_consistency)
