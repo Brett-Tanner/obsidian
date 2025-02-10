@@ -99,6 +99,16 @@ Locks can be created explicitly, but are most often created implicitly be statem
   - in prod you probably want the `CONCURRENTLY` keyword after `INDEX` to allow the table to continue to be queried
 - `DROP INDEX {name}` - drops an index
 
+#### Modifiers
+
+- `CASCADE`: Applies the command to all related tables as well
+- `CONCURRENTLY`: Allows carrying out an operation which would normally acquire a lock without acquiring one.
+  - Takes considerably longer as it must perform two scans of the table and create a temporary invalid index.
+  - If it fails, will leave the index behind. Recommend to drop and restart, but could also rebuild with `REINDEX CONCURRENTLY`.
+  - Adding/dropping indexes
+  - Rebuilding an index
+  - Adding/detaching a partition
+
 ## Chapter 4 - Data Correctness & Consistency
 
 At the application level they're ActiveRecord validations, but at the DB level they're objects used to constrain values on columns, tables or even multiple tables.
@@ -216,3 +226,50 @@ You can also validate individual attributes by extending `ActiveModel::EachValid
 
 - [active_record_doctor](https://github.com/gregnavis/active_record_doctor)
 - [database_consistency](https://github.com/djezzzl/database_consistency)
+
+## Chapter 5 - Modifying Busy Databases Without Downtime
+
+- Multiversion Concurrency Control (MVCC): Mechanism for managing row changes and concurrent access
+- ACID: A set of guarantees Postgres makes about Atomicity, Consistency, Isolation, Durability
+- Isolation levels: configurable access level for transactions
+- Denormalization: Duplicating some data for improved access speed
+- Backfilling: Populating columns with new data
+- Table Rewrites: Internal changes from schema migrations that cause a significant availability delay
+
+`disable_ddl_transactions!` disables ALL transaction types, but only the one that wraps the whole migration. It doesn't apply to explicit transactions or transactions around individual operations in the migration.
+
+You can add a lock timeout at a local, database or session level to prevent transactions waiting on locks forever. You can set `log_lock_waits` and provide a value for `deadlock_timeout` to log them to `postgresql.log` when they occur.
+
+`statement_timeout` can be set from Rails in `database.yml` to limit the maximum time a statement can run before being cancelled. If you have some queries which are allowed/expected to be slow, you can route them through a separate DB config to the same database, but with a smaller connection pool and longer `statement_timeout`.
+
+### Indicators of Dangerous Migrations
+
+- Adding a constraint which is validated immediately to an existing column
+  - Should instead add it as `NOT VALID` which applies only to new rows, then validate in second migration
+  - Still does need a lock with `NOT VALID` but extremely brief
+  - _Why is this better though? Applying the validation should still be slow, and still needs to happen._
+- Removing or renaming a column or table which will cause issues with the 'Schema Cache'
+- Changing the column type to an incompatible type
+
+#### Schema Caching
+
+When AR starts up it scans the DB tables for each model backed by one and stores the fields in the schema cache. If you drop a column without considering AR (_how?_), you might get errors when it tries to write to column that doesn't exist.
+
+Can avoid by adding the column to `ignored_columns`, but at that point you're restarting/deploying anyway so why not just use AR for the migration/make code changes to not access the removed column? Seems to be something about stuff [waiting in memory](https://api.rubyonrails.org/classes/ActiveRecord/ModelSchema/ClassMethods.html#method-i-ignored_columns), but still not exactly sure of the usecase.
+
+#### Backfilling large tables
+
+- Application Defaults: provide application-level defaults for the missing values, in tandem with applying those defaults when the old rows are saved
+- Over-provisioning: Temporarily over-provision the DB server and/or run during quiet periods.
+- Double Writing: Write to two locations simultaneously and switch reads to one.
+- Backfill indexes: Add temporary indexes to speed up backfilling.
+- Specialized tables: Duplicate data from a source to a special table
+  - unconnected to anything else
+  - set to `UNLOGGED` (no crash protection)/with auto-vacuum disabled
+  - you want as few rows as possible here, just enough to identify the record in the destination table and hold the values you're backfilling
+
+### Useful Gems
+
+- [Strong Migrations](https://github.com/ankane/strong_migrations)
+- [pgBadger](https://github.com/darold/pgbadger)
+  - organizes lock-related info from `postgresql.log`
