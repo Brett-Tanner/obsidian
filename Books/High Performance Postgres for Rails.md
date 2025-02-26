@@ -273,3 +273,68 @@ Can avoid by adding the column to `ignored_columns`, but at that point you're re
 - [Strong Migrations](https://github.com/ankane/strong_migrations)
 - [pgBadger](https://github.com/darold/pgbadger)
   - organizes lock-related info from `postgresql.log`
+
+## Chapter 6 - Optimising ActiveRecord
+
+Can use the `query_log_tags_enabled` option to give you query logs linking SQL to the call site in Rails, as long as you're not using prepared statements . Will also show the logs in Rails console.
+
+- `#load_async` can prevent long running queries blocking others which don't depend on them.
+- the `returning` option can specify return values you want from an insert (only an insert in AR)
+  - but if you [use SQL](https://www.postgresql.org/docs/current/dml-returning.html) it can be used with any modification
+  - useful for avoiding an extra query to fetch the updated data, like with `#reload`
+
+### Common Problems
+
+- N+1 queries
+  - can use joins (`joins`, `left_joins`)
+  - can use `preload(association)` to preload associations if you don't need conditions on the association
+  - `includes(association)` automatically uses `IN` like preload or a `LEFT OUTER JOIN` if you add conditions on the association
+  - for a nuclear option, can enable strict loading with `Model.strict_loading.all`, which prevents lazy loading completely
+- Not using counter_cache
+- Not using PG aggregate functions
+  - It's possible to define your own in PG, and there are more than AR gives you access to
+- Allocating too many objects by relying on AR when the primitives returned by raw queries like `find_by_sql`/`select_all`/`select_one` would be fine
+
+### CTEs (Common Table Expressions)
+
+Basically named sub-queries added as of AR 7.1, you can use `outer_query.with(subquery_name: subquery)` to create them and `#from(subquery).chained_query` to use them.
+
+```ruby
+Trip.with(
+    recently_rated:
+        Trip.where.not(rating: nil)
+            .where("completed_at > ?", 30.days.ago)
+).from(recently_rated).count
+```
+
+### Database Views
+
+Encapsulate a query, giving it a name and storing the query text as an object in Postgres. No native support in Rails but can be added with a gem like [Scenic](https://github.com/scenic-views/scenic) which adds the ability to generate view migrations. You can make a view-backed model, which you should probably make read-only to be safe.
+
+Can be defined and executed like:
+
+```SQL
+CREATE VIEW my_view AS
+  SELECT * FROM my_table
+  WHERE my_column = 'some value';
+
+SELECT * FROM my_view;
+```
+
+While they don't have performance advantages themselves, 'Materialized Views' which pre-calculate and store results do.
+
+- these are only useful if some amount of staleness is acceptable, similar to caching
+- You can refresh a materialized view with `REFRESH`, can be done concurrently if there's a unique index
+- You can add indexes to materialized views to improve performance even further
+- No partial refreshes, if a single row changes the whole view needs to be re-fetched, however some extensions attempt to address this
+
+### Caching
+
+The query cache keeps results around for the duration of a controller action.
+
+Prepared statements store queries without their parameters, allowing some time to be saved on parsing by plugging new parameters into them for subsequent queries. Rails creates them automatically by default and can store up to a thousand per connection.
+
+### Useful Gems
+
+- [bullet](https://github.com/flyerhzm/bullet)
+- [prosopite](https://github.com/charkost/prosopite) - claims to avoid false positives/negatives you can experience with `bullet`
