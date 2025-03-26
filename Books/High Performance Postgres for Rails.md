@@ -338,3 +338,117 @@ Prepared statements store queries without their parameters, allowing some time t
 
 - [bullet](https://github.com/flyerhzm/bullet)
 - [prosopite](https://github.com/charkost/prosopite) - claims to avoid false positives/negatives you can experience with `bullet`
+
+## Chapter 7 - Improving Query Performance
+
+- Selectivity: How narrow or wide a selection is
+- Cardinality: How many unique values there are
+- Sequential scan: reading all rows for a table
+- Index scan: Fetching values from an index
+- Index-only scan: Fetching values *only* from the index, without needing to access table data
+
+You can listen for slow queries usin `ActiveSupport::Notifications` on `sql.active_record` by measuring their duration and logging if they exceed a set time.
+
+Internally, `pg_stat_statements` collects extensive stats for (up to 5000 by default) groups of normalized queries (grouped if they're the same with params stripped out).
+
+### Query Execution Plans
+
+`EXPLAIN {query}` - Gives you the predicted cost, rows and width of the most efficient execution plan for that query. Adding the `ANALYZE` option actually runs the query, and gives you the actual cost to compare with the estimate.
+
+`ANALYZE` can also be used alone to manually gather statistics, for example `ANALYZE VERBOSE trips` will gather statistics for the `trips` table.
+
+## Chapter 8 - Optimized Indexes
+
+- Index definition: The columns covered by the index
+- Partial indexes: Only cover some rows, decided by a condition
+- Covering indexes: cover all columns needed for a query
+- Operator classes: Operators to be used by an index, specific to index types
+- Heap scan: Retrieve the rows identified by an index to get the unindexed column values. Can be lossy (get full pages which contain an indexed row, if `work_mem` is an issue) or exact.
+- High cardinality: A large number of unique values in the column (makes B-tree indexes especially efficient)
+
+Indexes default to B-tree, but you can use other types like gin for json, GIST or hash.
+
+Since data is stored in 'pages' on disk, indexes are useful for big tables to potentially avoid reading a bunch of unnecessary pages.
+
+However for smaller tables the planner might decide a sequential scan is faster, for reasons like:
+
+- reading the few available pages is faster than accessing the index
+- `SELECT *` or requesting many un-indexed columns, as even after filtering on indexes a second 'heap scan' is needed to retrieve the un-indexed column values
+- Newer versions of PG can parallelize sequential scans, potentially making them even less costly (in some ways).
+- Data distribution (skewed or uniform)
+- Costs associated with sequential/random access
+
+The `Buffers` line in `EXPLAIN` output contains `shared hit` (read from memory) and `read` (required disk access).
+
+### Multi-Column Indexes
+
+Can have a huge impact on performance for specific queries which only need the columns in the index, but take up extra space and can lead to redundant indexes. The [PG docs](https://www.postgresql.org/docs/current/indexes-multicolumn.html) recommend using them sparingly as single-column indexes are usually sufficient.
+
+The leading column in a multi-column index should (generally) cut the list down as much as possible. Queries using only the non-leading columns from a multi-column index may even skip the index entirely and do a sequential scan.
+
+They sound pretty useless with all those drawbacks, but can still be very effective for specific queries which might do something like only filter on the first indexed column then sort by the others.
+
+### Partial Indexes
+
+For columns with low cardinality like booleans, having a normal index is unlikely to be efficient as the small number of possible values mean many rows will need to be loaded regardless of the value filtered by.
+
+Partial indexes can help with this, and also offering other benefits like decreased size & write latency. For example if you add a partial index on only the least common boolean value it can significantly speed up queries for rows with that value. In addition to boolean columns, they can also be useful for excluding `NULL` values from searches filtered on a nullable column.
+
+### Expression Indexes
+
+Have an expression in their definition, transforming a value before it's stored. Can also be referred to as 'functional indexes'. They're useful for normalizing data in unique indexes, for example lowercasing all email addresses to prevent duplicates (do we/does Devise do this?).
+
+Especially important to check these are actually used, as the query conditions must match the expression *exactly*.
+
+### Other Index Types
+
+#### GIN
+
+Work well for nested data like `jsonb` columns. If you want to use one for containment queries (e.g. rows where the json data has a 'pizza': true k/v pair) then you need to set the index up differently.
+
+```sql
+-- Regular GIN index``
+CREATE INDEX ON trips USING GIN(data);
+
+-- Containment GIN index
+CREATE INDEX ON trips USING GIN(data JSONB_PATH_OPTS);
+```
+
+It's also possible to use a B-tree index with jsonb columns using expression indexes, but that seems more limited/verbose.
+
+The `postgres-json-schema` extension allows adding and enforcing a schema for your JSON columns using check constraints. You need to generate a JSON Schema compatible schema definition string, then create a check constraint using it.
+
+#### BRIN
+
+- Block: synonym for page
+- Block range: A group of pages physically adjacent in the table
+
+BRIN is a Block Range INdex, which points to a page/block and stores the min/max values from that block for the indexed column. As such, they're best suited for data where the physical layout matches how the data is queried, like timestamps.
+
+Since only pages are stored, it takes up very little space/has a small impact on insert performance compared to a B-tree index and can even outperform it on the right data.
+
+```sql
+CREATE INDEX ON trips USING BRIN(created_at);
+```
+
+#### Hash
+
+Store computed hashes from source columns rather than the actual value.
+
+Hash indexes only offer equality comparisons and cannot be used for unique constraints, in addition to potentially being *much* slower for new entries. However they use less space compared to B-tree indexes and entries have a uniform size (the size of the hash code). So potentially useful if indexing a column with large values.
+
+### Indexes for Sorting
+
+Since B-tree indexes are stored in sorted order by definition (ascending by default), they're very useful for sorting.
+
+`NULL` values are at the start by default, can be changed in SQL using `NULLS LAST` or AR using something like `.order(Table.arel_table[:completed_at].desc.nulls_last)`.
+
+### Covering Indexes
+
+Support a specific query by indexing all the columns necessary for that query.
+
+PG has the `INCLUDE` keyword to help with these, by specifying columns which can't be filtered by but supply data from the index to the `SELECT` clause. you append `INCLUDE` when creating your index and specify the data-only columns you want included.
+
+### Useful Resources
+
+- [Index maintenance queries](https://wiki.postgresql.org/wiki/Index_Maintenance)
