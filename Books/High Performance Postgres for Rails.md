@@ -452,3 +452,54 @@ PG has the `INCLUDE` keyword to help with these, by specifying columns which can
 ### Useful Resources
 
 - [Index maintenance queries](https://wiki.postgresql.org/wiki/Index_Maintenance)
+
+
+## Chapter 9 - High Impact Database Maintenance
+
+- Visibility map: Tracks which tuples are visible to transactions
+- Autovacuum: Kinda like garbage collection for PG
+
+3 most important maintenance operations are
+- `VACUUM`: Is triggered automatically based on certain conditions
+  - regular: marks space from dead tuples as reusable, updates visibility map
+  - `FULL`: reclaims space from dead tuples. Takes out heavy exclusive locks, generally can't be run online (in maintenance?)
+- `ANALYZE`: Recalculates statistics
+- `REINDEX`: Rebuilds indexes
+
+### Tuples
+
+Can be queried like `SELECT ctid, id FROM users WHERE id = 1;` `ctid` has two values, the page number and the tuple number (which increments when the original row is changed).
+
+### VACUUM
+
+Pages aren't filled completely, they leave space to store new tuples when rows are updated. You can pass `ANALYZE` to `VACUUM` to recalculate statistics at the same time like `VACUUM (ANALYZE, VERBOSE) users`, and `SKIP_LOCKED` to skip locked tables.
+
+You can also run paralell vacuum workers, and configure the maximum number of paralell workers.
+
+You can query the history of `VACUUM` and `ANALYZE` runs from `pg_stat_all_tables` as `last_autoanalyze`/`last_analyze` etc.
+
+#### Autovacuum
+
+Should generally assign more resources as load increases, especially `UPDATE` and `DELETE` statements. Otherwise the rate dead tuples accumulate might exceed the amount autovacuum can deal with, leading to runaway bloat.
+
+How do we view vacuum times in Crunchy? Do they do the tuning for us?
+
+`autovacuum_vacuum_threshold` and `autovacuum_vacuum_scale_factor` determine when autovacuum should run based on the total number of dead tuples and their percentage of total tuples. They can be changed for individual tables or globally.
+
+`autovacuum/_vacuum_cost_limit` decides how much work the process can do before going back to sleep.
+
+### REINDEX
+
+Used to remove references in the index to dead tuples, can be done `CONCURRENTLY`. You can provide a table name rather than the index name to reindex all indexes on a table.
+
+### Unused Indexes
+
+- Can prevent 'Heap only' tuple updates, which are much faster
+  - HOT updates occur when the update doesn't touch an indexed column, and there's free space in the page
+  - Can be made more likely by reducing the `fill_factor`
+- Increase `VACUUM` runtime
+- Increase query planning time
+- Slow down backup & restore operations
+- Obviously increase insert time & take up space
+
+May not need indexes on append-only tables. Why?
