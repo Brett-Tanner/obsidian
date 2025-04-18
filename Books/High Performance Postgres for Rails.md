@@ -64,6 +64,7 @@ You can find the path to your config file from `psql` with `SHOW config_file;`.
 - `\s` - command history
 - `\timing` - toggles timing
 - `\q` - quit
+- `\watch` - will re-run a query every 2 seconds by default, until stopped with `ctrl-c`
 - `\x` - toggle vertical output
 
 If you put `bind "^R" emc-inc-search-prev` in your `~/.editrc`, you can use `Ctrl+R` to search backwards in the command history. Just start typing and it'll display a match; execute with `\g`.
@@ -503,3 +504,61 @@ Used to remove references in the index to dead tuples, can be done `CONCURRENTLY
 - Obviously increase insert time & take up space
 
 May not need indexes on append-only tables. Why?
+
+## Chapter 10 - Reaching Greater Concurrency
+
+- Connection Pooler: 'Middleware'-like software between Rails & PG to allow more efficient use of connections
+- Client connections: Connections between ActiveRecord and the pooler
+- Server connections: Connections between the pooler and the database
+
+Database connections objects created in PG, and are used by Rails, `pgsql` and other tools like `pg_bouncer`. The total number of possible concurrent connections is limited by server resources, and establishing new connections adds latency due to authentication and SSL/TLS negotiation.
+
+### From Rails to PG & back
+
+1. AR generates a SQl query
+2. The `postgresqladapter` gem ensures the query is compatible with PG
+3. The `pg` gem acts a client interface from Ruby to PG
+4. AR uses a connection from the pool (as opposed to creating a new one) to send the query to PG
+5. PG gets the result and sends it back along the same connection. The connection stays open, but is idle.
+
+AR is responsible for closing the connection, if not closed it'll be left in an idle state until `idle_timeout` is reached. It's important to balance keeping idle connections around for latency reduction with not having idle connections consuming all your possible connections.
+
+Transactions can generally be in `idle` or `active` states. `idle` can include a connection doing work in a transaction but not actually using the connection. The `idle in transaction` state means a transaction was opened but is not completing any work, these should be terminated as errors.
+
+### Managing Idle Connections
+
+If idle connections take up all the available connections to your DB, any further attempts to connect will fail with `FATAL: sorry, too many clients already`.
+
+`idle_timeout` defaults to 5min in Rails, and PG 14 or later allows you to set `idle_session_timeout` on the server.
+
+PG has a `max_connections` value which defaults to 100, considered low for modern instances. Likely to be able to increase to something more like 500, but a tool like `pgtune` will give you a better idea for your DB.
+
+How would you ever get to that many connections? Remember Puma spawns multiple workers, which can each have multiple threads. Same with Sidekiq. And if you have `n` application servers connecting to a single database, multiply that by `n * connection pool size`.
+
+### `pg_bouncer`
+
+- allows connections to exceed the `max_connections` value (good?)
+- can hold connections open even if DB is temporarily unavailable, preventing them being lost
+- re-uses connections more efficiently and offers different 'pool modes' with different trade-offs
+  - 'aggressive' pool modes re-use connections more aggressively, offering latency reductions
+  - but potentially prevents the use of some features like prepared statements or query logging
+
+An alternative is [pgcat](https://github.com/postgresml/pgcat).
+
+### Connection Errors
+
+Be sure to set `statement_timeout`, `lock_timeout`, and `idle_in_transaction_session_timeout` to prevent long running queries. You can also set `idle_session_timeout`, but that might cause issues with legitimate sessions so tweak it more conservatively. Lower values will result in more errors, but increase your resiliency by ensuring long-running queries don't monopolize the DB.
+
+### Locks
+
+Setting `log_min_error_statement` will log queries to `postgresql.log` if blocked, and `log_lock_waits` provides a more targeted/detailed option.
+
+`SKIP LOCKED` in a query skips locked rows, useful for a job that can come back later and try again.
+
+Locks can be acquired pessimistically (upfront) or optimistically. Rails implements optimistic locking by adding a `lock_version` column to the table, which AR manages. If a modification to the row notices a newer version than the version it's modifying exists, it'll raise an `ActiveRecord::StaleObject` exception and need to be retried.
+
+PG can also do optimistic locking with `SERIALIZABLE`.
+
+'Advisory locks' are a weaker but faster type of lock, which is up to Rails to create and enforce. They avoid table bloat and are automatically cleaned up at the end of the session. They can be at the session or transaction level.
+
+
