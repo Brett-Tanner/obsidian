@@ -561,4 +561,19 @@ PG can also do optimistic locking with `SERIALIZABLE`.
 
 'Advisory locks' are a weaker but faster type of lock, which is up to Rails to create and enforce. They avoid table bloat and are automatically cleaned up at the end of the session. They can be at the session or transaction level.
 
+## Chapter 11 - Scalability of Common Features
 
+- Keyset Pagination: Pagnation using indexed columns
+- Cursor: A database object useful for pagination consistency
+
+### Pagination
+
+Can be done simply with `limit` and `offset`, but this can cause issues with result inconsistency (changes happen while going to a new page) & offset inefficiency (can't use index to filter because need an offset of `n` rows, so have to sequential scan). However offset inefficiency is less of an issue if later pages are not often accessed, as it can still be fast for small offsets.
+
+Cursors can help with result consistency by guaranteeing results will be as they were at the time the transaction opened, but have the drawback of requiring a persistent database connection and transaction. This prevents them being scalable for anything other than internal use. They're also not great if you need up to date data, as inserts/deletions could happen while the transaction is open and not be reflected.
+
+Ordered queries allow you to use keyset pagination, which looks at the last element of the current results to determine where to start the next page, on indexed columns. It's fast and consistent, but can't allow random access outside contiguous/uniformly distributed data.
+
+Can use `ctid` (the row's position in its page) to very quickly paginate, but you don't guarantee `n` results per page and only have one order available. Additionally, because the DB can insert new rows in a page to replace deleted ones, the order might not be meaningful. Can be reordered using `CLUSTER`, but must be done periodically and locks the table.
+
+## Chapter 12 - Working with Bulk Data
