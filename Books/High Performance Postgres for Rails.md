@@ -577,3 +577,50 @@ Ordered queries allow you to use keyset pagination, which looks at the last elem
 Can use `ctid` (the row's position in its page) to very quickly paginate, but you don't guarantee `n` results per page and only have one order available. Additionally, because the DB can insert new rows in a page to replace deleted ones, the order might not be meaningful. Can be reordered using `CLUSTER`, but must be done periodically and locks the table.
 
 ## Chapter 12 - Working with Bulk Data
+
+Focuses on write operations, recommends bulk operations which work on multiple rows at once where possible. More reads than writes in typical web app, so why care about write performance? Easier to scale reads as only one instance can write.
+
+### Upsert
+
+Combined statement that either updates an row or inserts a new one. Also `#upsert` and `#upsert_all` exist.
+
+You can provide `unique_by` & `on_conflict` to `upsert` or `upsert_all` to specify how constraint violations of the value passed to `unique_by` should be handled. Possible options for `on_conflict` include `DO NOTHING`, `DO UPDATE` (ignores the validation), `UPDATE ONLY` (allows specifying one or more cols to be updated in the event of a conflict) and `ON DUPLICATE` (specifies a list of columns to be updated, same but only list??).
+
+When there are conflicts, PG creates an `EXCLUDED` table, which can be queried to get the values which would have changed had the conflict not occured and apply them like so:
+
+```sql
+INSERT INTO table (id, name)
+VALUES (2, 'Timmy')
+ON CONFLICT (id) DO UPDATE
+SET name = EXCLUDED.name
+```
+
+This basically creates an upsert.
+
+If you make constraints (which support it) `DEFERRABLE`, you can swap two rows which are meant to have unique values in a single transaction/statement without violating the uniqueness constraint.
+
+From PG 15 you can use `MERGE`, which lets you specify `WHEN MATCHED` and `WHEN NOT MATCHED` clauses. Basically your `WHEN MATCHED` should update certain info on an existing row and `WHEN NOT MATCHED` should insert a new row if a matching row isn't found.
+
+```sql
+MERGE INTO table
+  USING (VALUES (1, 'Timmy')) people_data
+  ON (table.id = people_data.id)
+WHEN MATCHED THEN
+  UPDATE SET name = people_data.name
+WHEN NOT MATCHED THEN
+  INSERT (id, name) VALUES (people_data.id, people_data.name)
+```
+
+### Moving between DBs
+
+`pg_dump` and `pg_restore` offer a variety of options, including dumping the database to a text file as a series of `INSERT` statements.
+
+`COPY` is run by the PG backend and uses an absolute filename, whie `/COPY` runs from the current $USER and can handle relative pathnames.`COPY` can be filtered and ordered like a regular query by adding a `SELECT` statement between `COPY` and `TO`.
+
+It can be faster to create a table then `COPY` to it in the same transaction.
+
+### FDW
+
+Among other things, lets you use a CSV file as a read-only table.
+
+First you need to enable the `file_fdw` extension, then create a server and FDW like so: `CREATE SERVER file_server; FOREIGN DATA WRAPPER file_fdw`
